@@ -3,18 +3,22 @@ import plotly.express as px
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt 
+
 # Write text header
 st.header('WORLD CUP ANALYSIS')
 
 #LOAD DATA
 @st.cache
 def load_data(path):
-    data=pd.read_csv(path)
+    data = pd.read_csv(path, encoding='ISO 8859-15')
     return data
 
+data_load_state = st.text('Loading data...')
 matches=load_data('/Users/millyduong/Desktop/demo4/matches.csv')
+data_load_state.text("Done!")
 
-st.dataframe(matches)
+
+#st.dataframe(matches)
 
 #SQL TO QUERY RELEVANT DATA
 c = matches['Year'].unique()
@@ -56,6 +60,9 @@ fig.update_layout(
 st.subheader('Countries participated in World Cup up to 2014')
 st.plotly_chart(fig)
 
+if st.checkbox('Show raw data', key='raw1'):
+    st.subheader('Raw data')
+    st.write(matches)
 
 #SUNBURST CHART
 #LOAD DATA
@@ -65,16 +72,20 @@ df = pd.DataFrame(
     dict(Goals=df['Goals'], Year=df['Year'], Country=df['Country'])
 )
 
-st.dataframe(df)
+#st.dataframe(df)
 fig = px.sunburst(df, path=['Country', 'Year'], maxdepth= 2, values = df['Goals'])
 st.subheader('Top 7 Countries by wins')
 st.plotly_chart(fig)
+
+if st.checkbox('Show raw data',key='raw2'):
+    st.subheader('Raw data')
+    st.write(df)
 
 
 #AVERAGE NUMBER OF ATTENDEES PER MATCH OVER THE YEARS
 #LOAD DATA
 df=load_data('/Users/millyduong/Desktop/demo4/mean_attendance.csv')
-st.dataframe(df)
+#st.dataframe(df)
 
 fig=px.line(df, x='Year', y="Attendance", color='Teams')
 fig.update_layout(
@@ -87,13 +98,23 @@ fig.update_layout(
 st.subheader('Average Number of Attendees Per Match Over the Years')
 st.plotly_chart(fig)
 
+if st.checkbox('Show raw data', key='raw3'):
+    st.subheader('Raw data')
+    st.write(df)
+
+
 #Correlation between history performance and attendance
 df=load_data('/Users/millyduong/Desktop/demo4/correlation.csv')
-st.dataframe(df)
+#st.dataframe(df)
 fig, ax = plt.subplots()
 x = df['TotalGoals']
 y = df['Attendance']
-
-ax = plt.scatter(x, y )
+ax = plt.scatter(x, y)
+plt.xlabel("Total goals")
+plt.ylabel("Attendance")
 st.subheader('Correlation between performance and attendance')
 st.pyplot(fig)
+
+if st.checkbox('Show raw data', key='raw4'):
+    st.subheader('Raw data')
+    st.write(df)

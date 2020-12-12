@@ -86,17 +86,19 @@ if st.checkbox('Show raw data',key='raw2'):
 #LOAD DATA
 df=load_data('/Users/millyduong/Desktop/demo4/mean_attendance.csv')
 #st.dataframe(df)
-
-fig=px.line(df, x='Year', y="Attendance", color='Teams')
-fig.update_layout(
-    xaxis=dict(
-        tickmode='array',
-        tickvals=[1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978,
-       1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014]
-    )
-)
 st.subheader('Average Number of Attendees Per Match Over the Years')
-st.plotly_chart(fig)
+teams = st.multiselect("Show teams you'd like to compare?", df['Teams'].unique())
+new_df = df[df['Teams'].isin(teams)]
+if len(teams) > 0 :
+    fig=px.line(new_df, x='Year', y="Attendance", color='Teams')
+    fig.update_layout(
+        xaxis=dict(
+            tickmode='array',
+            tickvals=[1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978,
+        1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014]
+        )
+    )
+    st.plotly_chart(fig)
 
 if st.checkbox('Show raw data', key='raw3'):
     st.subheader('Raw data')

@@ -131,6 +131,7 @@ if st.checkbox('Show raw data', key='raw4'):
 
 import pandas_datareader.data as web
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 ## List of sponsors
 

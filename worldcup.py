@@ -193,36 +193,40 @@ stock = get_sponsor_stock_data(sp)
 
 st.subheader('Stock price (mothly average)')
 
-fig = make_subplots(
-    rows=12, cols=2,
-    subplot_titles=[k for k, v in stock.items()]
-)
+@st.cache
+def draw_from_stock_dict(stock_dict):
 
-for i, k in enumerate(stock.keys()):
-    r = (i+2)//2
-    c = ((i+2)%2)+1
-    
-    fig.add_trace(go.Scatter(x=stock[k].index, y=stock[k]["Close"], mode='lines'),
-              row=r, col=c)
-    t = sp.set_index('sponsor').T.reset_index()
-    years = pd.to_datetime(t[t[k] == 1]['index'].values) + pd.DateOffset(180)
-    
-    for y in years:
-        fig.add_vline(x=y, line_width=0.5, line_color="orangered", row=r, col=c)
-    fig.update_xaxes(
-        range = [years[0] - pd.DateOffset(365), years[-1] + pd.DateOffset(365)],
-        tickvals = years,
-        ticktext = years.year,
-        title = '',row=r, col=c
+    fig = make_subplots(
+        rows=12, cols=2,
+        subplot_titles=[k for k, v in stock_dict.items()]
     )
 
-    fig.update_yaxes(
-        title = 'Share Price (USD)',row=r, col=c
-    )
-                    
-fig.update_layout(height=3200, width=1000, title_text="Multiple Subplots with Titles", showlegend=False)
+    for i, k in enumerate(stock_dict.keys()):
+        r = (i+2)//2
+        c = ((i+2)%2)+1
+        
+        fig.add_trace(go.Scatter(x=stock_dict[k].index, y=stock_dict[k]["Close"], mode='lines'),
+                row=r, col=c)
+        t = sp.set_index('sponsor').T.reset_index()
+        years = pd.to_datetime(t[t[k] == 1]['index'].values) + pd.DateOffset(180)
+        
+        for y in years:
+            fig.add_vline(x=y, line_width=0.5, line_color="orangered", row=r, col=c)
+        fig.update_xaxes(
+            range = [years[0] - pd.DateOffset(365), years[-1] + pd.DateOffset(365)],
+            tickvals = years,
+            ticktext = years.year,
+            title = '',row=r, col=c
+        )
 
-st.plotly_chart(fig)
+        fig.update_yaxes(
+            title = 'Share Price (USD)',row=r, col=c
+        )
+                        
+    fig.update_layout(height=3200, width=1000, title_text="Share price of publicly traded sponsors", showlegend=False)
+    return(fig)
+
+st.plotly_chart(draw_from_stock_dict(stock))
 
 if st.checkbox('Show raw data', key='raw5'):
     st.subheader('Raw data')

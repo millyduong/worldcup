@@ -14,7 +14,7 @@ def load_data(path):
     return data
 
 data_load_state = st.text('Loading data...')
-matches=load_data('/Users/millyduong/Desktop/demo4/matches.csv')
+matches=load_data('matches.csv')
 data_load_state.text("Done!")
 
 
@@ -66,7 +66,7 @@ if st.checkbox('Show raw data', key='raw1'):
 
 #SUNBURST CHART
 #LOAD DATA
-df=load_data('/Users/millyduong/Desktop/demo4/sunburst_df.csv')
+df=load_data('sunburst_df.csv')
 
 df = pd.DataFrame(
     dict(Goals=df['Goals'], Year=df['Year'], Country=df['Country'])
@@ -84,7 +84,7 @@ if st.checkbox('Show raw data',key='raw2'):
 
 #AVERAGE NUMBER OF ATTENDEES PER MATCH OVER THE YEARS
 #LOAD DATA
-df=load_data('/Users/millyduong/Desktop/demo4/mean_attendance.csv')
+df=load_data('mean_attendance.csv')
 #st.dataframe(df)
 st.subheader('Average Number of Attendees Per Match Over the Years')
 teams = st.multiselect("Show teams you'd like to compare?", df['Teams'].unique())
@@ -106,7 +106,7 @@ if st.checkbox('Show raw data', key='raw3'):
 
 
 #Correlation between history performance and attendance
-df=load_data('/Users/millyduong/Desktop/demo4/correlation.csv')
+df=load_data('correlation.csv')
 #st.dataframe(df)
 fig, ax = plt.subplots()
 x = df['TotalGoals']

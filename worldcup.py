@@ -233,3 +233,54 @@ if st.checkbox('Show raw data', key='raw5'):
     st.write(sp)
     for k in stock.keys():
         st.write(stock[k])
+
+
+##############################################
+#        International performance           #
+##############################################
+
+## Read the file
+inter = pd.read_csv('international_matches.csv')
+
+## Clean data
+inter['year'] = pd.DatetimeIndex(inter['date']).year
+
+g1 = inter.groupby(['home_team','year']).agg({'home_score':['sum', 'count'], 'away_score':'sum'})
+g1.columns=['scored', 'played', 'against']
+g1.index.set_names(['team', 'year'], inplace=True)
+
+g2 = inter.groupby(['away_team','year']).agg({'home_score':'sum', 'away_score':['sum', 'count']})
+g2.columns=['against', 'scored', 'played']
+g2.index.set_names(['team', 'year'], inplace=True)
+
+gby = g1.add(g2, fill_value=0).reset_index()
+
+
+## calculate averages
+gby['r_against'] = gby['against'].rolling(8).mean()
+gby['r_scored'] = gby['scored'].rolling(8).mean()
+gby['r_played'] = gby['played'].rolling(8).mean()
+
+
+st.subheader('Goal production throughout the years')
+
+## Selection boxes
+team = st.selectbox("Choose a team", gby['team'].unique())
+played = st.checkbox("Include matches count?")
+
+th = gby[gby['team'] == team]
+
+## Graph
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(x=th['year'], y=th['r_scored'], mode='lines', name='Goals scored'))
+fig.add_trace(go.Scatter(x=th['year'], y=th['r_against'], mode='lines', name='Goals against'))
+
+if played:
+    fig.add_trace(go.Scatter(x=th['year'], y=th['played'], mode='lines', name='Matches played'))
+
+st.plotly_chart(fig)
+
+if st.checkbox('Show raw data', key='raw6'):
+    st.subheader('Raw data')
+    st.write(th)

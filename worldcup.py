@@ -193,7 +193,7 @@ stock = get_sponsor_stock_data(sp)
 
 st.subheader('Stock price (mothly average)')
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def draw_from_stock_dict(stock_dict):
 
     fig = make_subplots(
@@ -265,21 +265,21 @@ gby['r_played'] = gby['played'].rolling(8).mean()
 st.subheader('Goal production throughout the years')
 
 ## Selection boxes
-team = st.selectbox("Choose a team", gby['team'].unique())
+team = st.selectbox("Choose a team", gby['team'].unique(), index=gby['team'].unique().tolist().index('Vietnam'))
 played = st.checkbox("Include matches count?")
 
 th = gby[gby['team'] == team]
 
 ## Graph
-fig = go.Figure()
+figure = go.Figure()
 
-fig.add_trace(go.Scatter(x=th['year'], y=th['r_scored'], mode='lines', name='Goals scored'))
-fig.add_trace(go.Scatter(x=th['year'], y=th['r_against'], mode='lines', name='Goals against'))
+figure.add_trace(go.Scatter(x=th['year'], y=th['r_scored'], mode='lines', name='Goals scored'))
+figure.add_trace(go.Scatter(x=th['year'], y=th['r_against'], mode='lines', name='Goals against'))
 
 if played:
-    fig.add_trace(go.Scatter(x=th['year'], y=th['played'], mode='lines', name='Matches played'))
+    figure.add_trace(go.Scatter(x=th['year'], y=th['played'], mode='lines', name='Matches played'))
 
-st.plotly_chart(fig)
+st.plotly_chart(figure)
 
 if st.checkbox('Show raw data', key='raw6'):
     st.subheader('Raw data')

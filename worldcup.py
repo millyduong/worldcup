@@ -81,7 +81,6 @@ if st.checkbox('Show raw data',key='raw2'):
     st.subheader('Raw data')
     st.write(df)
 
-
 #AVERAGE NUMBER OF ATTENDEES PER MATCH OVER THE YEARS
 #LOAD DATA
 df=load_data('mean_attendance.csv')
@@ -89,8 +88,11 @@ df=load_data('mean_attendance.csv')
 st.subheader('Average Number of Attendees Per Match Over the Years')
 teams = st.multiselect("Show teams you'd like to compare?", df['Teams'].unique())
 new_df = df[df['Teams'].isin(teams)]
+
 if len(teams) > 0 :
     fig=px.line(new_df, x='Year', y="Attendance", color='Teams')
+
+    fig.add_vrect(x0=1938, x1=1950, line_width=0, fillcolor="black", opacity=0.3)
     fig.update_layout(
         xaxis=dict(
             tickmode='array',
@@ -120,3 +122,109 @@ st.pyplot(fig)
 if st.checkbox('Show raw data', key='raw4'):
     st.subheader('Raw data')
     st.write(df)
+
+##############################################
+#       Sponsorship over the years           #
+##############################################
+
+## Library imports
+
+import pandas_datareader.data as web
+from plotly.subplots import make_subplots
+
+## List of sponsors
+
+sponsors = {
+    "1978": ["Coca-Cola", "Canon", "Philips", "Gillette", "KLM", "Café de Brasil"], 
+    "1982": ["Canon", "Coca-Cola", "Fujifilm", "Gillette", "Iveco", "JVC", "Metaxa", "RJ Reynolds", "Seiko"], 
+    "1986": ["Anheuser-Busch", "Bata", "Canon", "Cinzano", "Coca-Cola", "Fujifilm", "Gillette", "JVC", "Opel", "Philips", "RJ Reynolds", "Seiko"], 
+    "1990": ["Coca-Cola", "Alfa Romeo", "Anheuser-Busch", "Canon", "Fujifilm", "Gillette", "JVC", "Philips", "Snickers", "Vini D’Italia"], 
+    "1994": ["Canon", "Coca-Cola", "Energizer", "Fujifilm", "General" "Motors", "Gillette", "JVC", "Mastercard", "McDonald's", "Philips", "Snickers"], 
+    "1998": ["Adidas", "Coca-Cola", "Anheuser-Busch", "Canon", "Fujifilm", "Gillette", "JVC", "Mastercard", "McDonald's", "Opel", "Philips", "Snickers"], 
+    "2002": ["Adidas", "Coca-Cola", "Hyundai", "Sony", "Anheuser-Busch", "Avaya", "Fujifilm", "Gillette", "JVC", "Korea Telekom/NTT", "Mastercard", "McDonald's", "Philips", "Toshiba", "Yahoo"], 
+    "2006": ["Adidas", "Coca-Cola", "Emirates", "Hyundai", "Sony", "Anheuser-Busch", "Avaya", "Continental", "Deutsche Telekom", "Fujifilm", "Gillette", "Mastercard", "McDonald's", "Philips", "Toshiba"], 
+    "2010": ["Yahoo", "Anheuser-Busch", "Castrol", "Continental", "McDonald's", "MTN", "Satyam"], 
+    "2014": ["Anheuser-Busch", "Castrol", "Continental", "Johnson & Johnson", "McDonald's", "Oi", "Seara", "Yingli Solar"],
+    "2018": ["Anheuser-Busch", "Hisense", "Sony", "McDonald's", "Mengniu", "Yadea", "Rostelecom", "Diking", "LUCI"]
+}
+
+## Unique sponsors
+s = []
+for y in sponsors:
+  for n in sponsors[y]:
+    if n not in s:
+      s.append(n)
+
+## Dataframe with 0 as default value
+sp = pd.DataFrame(index=s, columns = sponsors.keys(), data=0)
+
+## Fill dataframe with sponsorship information
+for y in sponsors:
+  for n in sponsors[y]:
+    sp[y][n] = 1
+
+sp.reset_index(inplace=True)
+sp.rename(columns={"index":"sponsor"}, inplace=True)
+
+## Stock trading symbols for publicly traded companies that sponsored the campionship
+symbols = ['KO', 'CAJ', 'PHG', 'N/A', 'KLMR', 'N/A', 'FUJIY', 'N/A', 'N/A', 'N/A', 'N/A', 'SEKEY', 'BUD', 'N/A', 'N/A', 'N/A', 'N/A', 'HSY', 'N/A', 'ENR', 'GM', 'MA', 'MCD', 'ADDYY', 'HYMTF', 'SNE', 'AVYA', 'KT', 'TOSBF',
+           'N/A', 'N/A', 'CLR', 'N/A', 'DTEGY', 'N/A', 'N/A', 'SAY', 'JNJ', 'N/A', 'N/A', 'HISEF', 'N/A','N/A','N/A','N/A','N/A']
+sp['symbol'] = symbols
+
+## Cull the list
+sp = sp[sp['symbol']!='N/A']
+
+## Create dictionary of dataframes with stock information from all the sponsors
+
+@st.cache
+def get_sponsor_stock_data(sp_list):
+    s_dict = {}
+    for k in sp_list['sponsor']:
+        s_dict[k] = web.DataReader(sp_list[sp_list['sponsor']==k]['symbol'], start='1978', end='2020', data_source='yahoo')
+        s_dict[k].columns = s_dict[k].columns.droplevel('Symbols')
+        s_dict[k].drop(columns = ['Adj Close', 'High', 'Low', 'Open'], inplace=True)
+        s_dict[k] = s_dict[k].resample('M').mean()
+    return s_dict
+
+stock = get_sponsor_stock_data(sp)
+
+## Graph the info
+
+st.subheader('Stock price (mothly average)')
+
+fig = make_subplots(
+    rows=12, cols=2,
+    subplot_titles=[k for k, v in stock.items()]
+)
+
+for i, k in enumerate(stock.keys()):
+    r = (i+2)//2
+    c = ((i+2)%2)+1
+    
+    fig.add_trace(go.Scatter(x=stock[k].index, y=stock[k]["Close"], mode='lines'),
+              row=r, col=c)
+    t = sp.set_index('sponsor').T.reset_index()
+    years = pd.to_datetime(t[t[k] == 1]['index'].values) + pd.DateOffset(180)
+    
+    for y in years:
+        fig.add_vline(x=y, line_width=0.5, line_color="orangered", row=r, col=c)
+    fig.update_xaxes(
+        range = [years[0] - pd.DateOffset(365), years[-1] + pd.DateOffset(365)],
+        tickvals = years,
+        ticktext = years.year,
+        title = '',row=r, col=c
+    )
+
+    fig.update_yaxes(
+        title = 'Share Price (USD)',row=r, col=c
+    )
+                    
+fig.update_layout(height=3200, width=1000, title_text="Multiple Subplots with Titles", showlegend=False)
+
+st.plotly_chart(fig)
+
+if st.checkbox('Show raw data', key='raw5'):
+    st.subheader('Raw data')
+    st.write(sp)
+    for k in stock.keys():
+        st.write(stock[k])
